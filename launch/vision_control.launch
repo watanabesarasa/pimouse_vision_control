@@ -11,5 +11,5 @@
     <param name="port" value="10000" />
   </node>   
             
-  <node pkg="pimouse_visual_control" name="face_to_face" type="face_to_face.py" output="screen" />
+  <node pkg="pimouse_vision_control" name="face_to_face" type="face_to_face.py" output="screen" />
 </launch>
