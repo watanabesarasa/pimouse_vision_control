@@ -34,8 +34,8 @@ class VisionTest(unittest.TestCase):
         l_turn_rate = 1.0*l_turn_count / count
 
         turn = None
-        if r_turn_rate > 0.5 and l_turn_rate < 0.1: turn = "right"
-        if l_turn_rate > 0.5 and r_turn_rate < 0.1: turn = "left"
+        if r_turn_rate > 0.6 and l_turn_rate < 0.2: turn = "right"
+        if l_turn_rate > 0.6 and r_turn_rate < 0.2: turn = "left"
 
         self.assertFalse(turn is None,
                 "direction is not fixed. l:" + str(l_turn_rate) + " r:" + str(r_turn_rate))
