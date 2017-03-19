@@ -45,3 +45,7 @@ class VisionTest(unittest.TestCase):
 if __name__ == '__main__':
     rospy.init_node('test_face_to_face')
     rostest.rosrun('pimouse_vision_control','test_face_to_face', VisionTest)
+
+# Copyright 2016 Ryuichi Ueda
+# Released under the MIT License.
+# To make line numbers be identical with the book, this statement is written here. Don't move it to the header.

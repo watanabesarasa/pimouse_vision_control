@@ -75,3 +75,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         fd.control()
         rate.sleep()
+
+# Copyright 2016 Ryuichi Ueda
+# Released under the MIT License.
+# To make line numbers be identical with the book, this statement is written here. Don't move it to the header.

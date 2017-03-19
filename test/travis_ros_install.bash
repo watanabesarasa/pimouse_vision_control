@@ -21,3 +21,6 @@ catkin_init_workspace
 cd ~/catkin_ws
 catkin_make
 
+# Copyright 2016 Ryuichi Ueda
+# Released under the MIT License.
+# To make line numbers be identical with the book, this statement is written here. Don't move it to the header.
