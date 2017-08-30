@@ -59,7 +59,7 @@ class FaceToFace():
         pos_x_rate = (r[0] + r[2]/2 - wid)*1.0/wid
         rot = -0.25*pos_x_rate*math.pi    #画面のキワに顔がある場合にpi/4[rad/s]に
         rospy.loginfo("detected %f",rot)
-        return rot
+        return rot/4
 
     def control(self):         #新たにcontrolメソッドを作る
         m = Twist()
