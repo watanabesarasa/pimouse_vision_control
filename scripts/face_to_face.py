@@ -12,6 +12,8 @@ class FaceToFace():
         self.pub = rospy.Publisher("face", Image, queue_size=1)
         self.bridge = CvBridge()
         self.image_org = None
+	self.lightsensor_date = 0.0
+	self.count = 0
         ###以下のモータの制御に関する処理を追加###
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         rospy.wait_for_service('/motor_on')
@@ -22,7 +24,6 @@ class FaceToFace():
     def monitor(self,rect,org):
         if rect is not None:
             cv2.rectangle(org,tuple(rect[0:2]),tuple(rect[0:2]+rect[2:4]),(0,255,255),4)
-       
         self.pub.publish(self.bridge.cv2_to_imgmsg(org, "bgr8"))
    
     def get_image(self,img):
@@ -41,13 +42,13 @@ class FaceToFace():
         classifier = "/usr/share/opencv/haarcascades/haarcascade_frontalface_default.xml"
         cascade = cv2.CascadeClassifier(classifier)
         face = cascade.detectMultiScale(gimg,1.1,1,cv2.CASCADE_FIND_BIGGEST_OBJECT)
-    
+   
         if len(face) == 0:    #len(face)...以下を次のように書き換え
             self.monitor(None,org)
             return None       
                               
-        r = face[0]           
-        self.monitor(r,org)   
+        r = face[0]          
+        self.monitor(r,org) 
         return r  
 
     def rot_vel(self):        #このメソッドを追加
@@ -57,15 +58,55 @@ class FaceToFace():
            
         wid = self.image_org.shape[1]/2   #画像の幅の半分の値
         pos_x_rate = (r[0] + r[2]/2 - wid)*1.0/wid
-        rot = -0.25*pos_x_rate*math.pi    #画面のキワに顔がある場合にpi/4[rad/s]に
-        rospy.loginfo("detected %f",rot)
+        rot = -0.05*pos_x_rate*math.pi    #画面のキワに顔がある場合にpi/4[rad/s]に
+	if self.count >= 23:
+	    rot = 0.0
+       #rospy.loginfo("detected %f",rot)
         return rot
+
+    def linear_vel(self):
+	r = self.detect_face()
+        if r is None:
+            return 0.0
+	
+	x = r[2]
+	y = r[3]
+	area = abs(x*y)
+	rospy.loginfo(area)
+
+	if area <= 40000:
+	    vel = 0.015
+	    rospy.loginfo("small")
+	    self.count = 0
+	elif area >= 60000:
+	    vel = -0.015
+	    rospy.loginfo("big")
+	    self.count = 0
+	else:
+	    vel = 0.0
+	    rospy.loginfo("ready")
+	    self.count = self.count+1
+	return(vel)
+
+    def pic(self):
+	img = self.image_org
+	cv2.imwrite("/tmp/image.jpg",img)
+	rospy.loginfo("Take a picture!!!")
+	
+	try:
+	    with open ("/dev/rtlightsensor0",'r') as f:
+		self.lightsensor_date = f.readline().split()
+	except IOError:
+	    rospy.loginfo("can't open rtlightsensor0")
 
     def control(self):         #新たにcontrolメソッドを作る
         m = Twist()
-        m.linear.x = 0.0
+        m.linear.x = self.linear_vel()
         m.angular.z = self.rot_vel()
         self.cmd_vel.publish(m)
+	
+	if self.linear_vel()==0 and self.rot_vel()==0 :
+	    self.pic()
 
 if __name__ == '__main__':
     rospy.init_node('face_to_face')
