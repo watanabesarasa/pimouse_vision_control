@@ -5,15 +5,18 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist             #追加
 from std_srvs.srv import Trigger                #追加
+from raspimouse_ros_2.msg import ButtonValues
 
 class FaceToFace():
     def __init__(self):
         sub = rospy.Subscriber("/cv_camera/image_raw", Image, self.get_image)
+	sub_button = rospy.Subscriber("/buttons", ButtonValues, self.callback_button)
         self.pub = rospy.Publisher("face", Image, queue_size=1)
         self.bridge = CvBridge()
         self.image_org = None
 	self.lightsensor_date = 0.0
 	self.count = 0
+	self.flag = False
         ###以下のモータの制御に関する処理を追加###
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         rospy.wait_for_service('/motor_on')
@@ -72,7 +75,7 @@ class FaceToFace():
 	x = r[2]
 	y = r[3]
 	area = abs(x*y)
-	rospy.loginfo(area)
+	#rospy.loginfo(area)
 
 	if area <= 40000:
 	    vel = 0.015
@@ -98,6 +101,9 @@ class FaceToFace():
 		self.lightsensor_date = f.readline().split()
 	except IOError:
 	    rospy.loginfo("can't open rtlightsensor0")
+	
+	self.count = 0
+	self.flag = False
 
     def control(self):         #新たにcontrolメソッドを作る
         m = Twist()
@@ -106,15 +112,21 @@ class FaceToFace():
         self.cmd_vel.publish(m)
 	
 	if self.linear_vel()==0 and self.rot_vel()==0 :
-	    self.pic()
+	    if self.count >= 1 and self.flag == True:
+		self.pic()
+
+    def callback_button(self,date):
+	if date.front == True:
+	    self.flag = True
 
 if __name__ == '__main__':
     rospy.init_node('face_to_face')
     fd = FaceToFace()
-
+	
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        fd.control()
+	if fd.flag == True:
+            fd.control()
         rate.sleep()
 
 # Copyright 2016 Ryuichi Ueda
